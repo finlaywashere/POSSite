@@ -31,7 +31,7 @@
                 <option value="0">Pickup Later</option>
             </select><br>
             Customer ID or Phone (required):
-            <input type="number" id="customer" required><br>
+            <input type="number" id="customer" required value="0"><br>
             Original Order (if return):
             <input type="number" id="original">
             <button id="recall" onclick="returnRecall();">Recall Original</button><br>
@@ -334,8 +334,10 @@
                 inp.type = "number";
                 inp.id = "item-"+i+"-"+lineC;
                 inp.required = true;
-                if(i != 0)
+                if(i != 0){
                     inp.onchange = updateTotals;
+                    inp.onkeypress = updateTotals;
+                }
                 if(i == 3){
                     inp.disabled = true;
                 }
@@ -360,6 +362,7 @@
                             oPr.value = 0;
                             pr.value = 0;
                         }
+                        updateTotals();
                     };
                 }
                 elem.appendChild(inp);
@@ -367,6 +370,29 @@
             }
             items.appendChild(row);
             lineC++;
+        }
+        function getTotalDifference(){
+            var subtotal = 0;
+            for(var i = 0; i < lineC; i++){
+                var item = {};
+                for(var j = 0; j < 4; j++){
+                    var inp = document.getElementById("item-"+j+"-"+i);
+                    if(j == 1)
+                        item['count'] = inp.value;
+                    else if(j == 2)
+                        item['price'] = inp.value;
+                }
+                subtotal += item['count'] * item['price'];
+            }
+            var pTotal = 0;
+            for(var i = 0; i < payC; i++){
+                var inp = document.getElementById("pay-1-"+i);
+                pTotal += parseFloat(inp.value);
+            }
+            var total = 1.13 * subtotal;
+            if(isNaN(pTotal))
+                pTotal = 0;
+            return total-pTotal;
         }
         function expandPRow(){
             var row = document.createElement("tr");
@@ -379,6 +405,10 @@
                     inp.id = "pay-"+i+"-"+payC;
                     inp.onchange = updateTotals;
                     inp.required = true;
+                    if(i == 1){
+                        var total = getTotalDifference();
+                        inp.value = total.toFixed(2);
+                    }
                     elem.appendChild(inp);
                 }else{
                     var select = document.createElement("select");
@@ -395,6 +425,17 @@
                     opt3.value = 3;
                     opt3.innerHTML = "DEBIT";
                     select.appendChild(opt3);
+                    const row = payC;
+                    select.onchange = function(){
+                        var tmpSelect = document.getElementById("pay-0-"+row);
+                        var tmpId = document.getElementById("pay-2-"+row);
+                        var tmpAuth = document.getElementById("pay-3-"+row);
+                        if(select.value == 0){
+                            tmpId.value = "cash";
+                            tmpAuth.value = "000000";
+                        }
+                    };
+                    select.value = 1;
                     elem.appendChild(select);
                 }
                 row.appendChild(elem);
@@ -556,14 +597,16 @@
                 }
                 subtotal += item['count'] * item['price'];
             }
-            subText.innerHTML = "Subtotal: $"+subtotal;
-            totText.innerHTML = "Total: $"+(subtotal*1.13);
+            subText.innerHTML = "Subtotal: $"+subtotal.toFixed(2);
+            totText.innerHTML = "Total: $"+(subtotal*1.13).toFixed(2);
             var pTotal = 0;
             for(var i = 0; i < payC; i++){
                 var inp = document.getElementById("pay-1-"+i);
                 pTotal += parseFloat(inp.value);
             }
-            payText.innerHTML = "Payment Total: $"+pTotal;
+            if(isNaN(pTotal))
+                pTotal = 0;
+            payText.innerHTML = "Payment Total: $"+pTotal.toFixed(2);
         }
     </script>
 </html>
