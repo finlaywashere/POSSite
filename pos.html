@@ -1,0 +1,533 @@
+<html>
+    <head>
+        <title>POS Demo</title>
+        <style>
+            button {
+                display: inline-block;
+            }
+            .float {
+                position: absolute;
+                margin-top: 10%;
+                top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>POS Demo</h1>
+        <p>Please note that this is in no way a complete POS system and is missing lots of important stuff such as EOD totals and cash management</p><br>
+        <button id="saleB">Start Sale</button>
+        <button id="lookB">Lookup By Customer</button>
+        <button id="viewB">View Order</button>
+        <button id="pickB">Order Pickup</button>
+        <div id="sale" style="visibility: hidden;" class="float">
+            Type:
+            <select id="type">
+                <option value="0">Sale</option>
+                <option value="1">Return</option>
+            </select><br>
+            Disposition:
+            <select id="dispo">
+                <option value="1">Carry With</option>
+                <option value="0">Pickup Later</option>
+            </select><br>
+            Customer (id or phone number):
+            <input type="number" id="customer"><br>
+            Original Order (if return):
+            <input type="number" id="original">
+            <button id="recall" onclick="returnRecall();">Recall Original</button><br>
+            Comment:
+            <input type="text" id="comment"><br>
+            <button id="addItem" onclick="expandIRow();">Add Item</button>
+            <table id="items">
+                <tr class="noclear">
+                    <th>SKU</th>
+                    <th>Count</th>
+                    <th>Price</th>
+                    <th>Original Price</th>
+                    <th>Max Count</th>
+                </tr>
+            </table><br>
+            <button id="addPayment" onclick="expandPRow();">Add Payment</button>
+            <table id="payments">
+                <tr class="noclear">
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Identifier</th>
+                    <th>Authorization</th>
+                </tr>
+            </table><br>
+            <button id="complete" onclick="completeOrder();">Complete Sale</button>
+            <p id="oStatus"></p>
+        </div>
+        <div id="lookup" style="visibility: hidden;" class="float">
+            Customer (phone number or id):
+            <input type="number" id="custLookup">
+            <button onclick="custLookup();">Lookup</button>
+            <br>
+            <table id="orders">
+                <tr class="noclear">
+                    <th>ID</th>
+                    <th>Total</th>
+                    <th>Timestamp</th>
+                    <th>Creator</th>
+                </tr>
+            </table>
+        </div>
+        <div id="pickup" style="visibility: hidden;" class="float">
+            Order Id:
+            <input type="number" id="pickupId">
+            <button id="pickupB" onclick="doPickup();">Pick Up Order</button>
+            <br>
+            <p id="pickupS"></p>
+        </div>
+        <div id="view" style="visibility: hidden;" class="float">
+            Order Number:
+            <input type="number" id="orderNum">
+            <button id="viewOrder" onclick="viewOrder();">View Order</button>
+            <table id="orderData">
+                <tr class="noclear">
+                    <th>Customer</th>
+                    <th>Subtotal</th>
+                    <th>Total</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                </tr>
+            </table><br>
+            <table id="orderLines">
+                <tr class="noclear">
+                    <th>ID</th>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Count</th>
+                    <th>Price</th>
+                    <th>Orig Price</th>
+                    <th>Override Reason</th>
+                </tr>
+            </table><br>
+            <table id="orderPayments">
+                <tr class="noclear">
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Identifier</th>
+                    <th>Authorization</th>
+                </tr>
+            </table><br>
+            <table id="orderComments">
+                <tr class="noclear">
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Text</th>
+                </tr>
+            </table>
+        </div>
+    </body>
+    <script>
+        function clearTable(table){
+            for(const node of table.childNodes){
+                var found = false;
+                for(const n of node.childNodes){
+                    if(n.classList != undefined){
+                        for(const cl of n.classList){
+                            if(cl == "noclear"){
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(!found)
+                    node.remove();
+            }
+        }
+        function sendCmd(cmd){
+            var http = new XMLHttpRequest();
+            http.open("GET", "cmd.php?json="+encodeURI(JSON.stringify(cmd)), false);
+            http.send(null);
+            return JSON.parse(http.responseText);
+        }
+        function createNode(row, value){
+            var td = document.createElement("td");
+            td.innerHTML = value;
+            row.appendChild(td);
+        }
+        var saleB = document.getElementById("saleB");
+        var lookupB = document.getElementById("lookB");
+        var pickupB = document.getElementById("pickB");
+        var viewB = document.getElementById("viewB");
+        var sale = document.getElementById("sale");
+        var lookup = document.getElementById("lookup");
+        var pickup = document.getElementById("pickup");
+        var view = document.getElementById("view");
+        
+        function hideAll(){
+            sale.style = "visibility: hidden;";
+            lookup.style = "visibility: hidden;";
+            pickup.style = "visibility: hidden;";
+            view.style = "visibility: hidden;";
+        }
+
+        saleB.onclick = function(){
+            hideAll();
+            sale.style = "visibility: visible;";
+        };
+        lookupB.onclick = function(){
+            hideAll();
+            lookup.style = "visibility: visible;";
+        };
+        pickupB.onclick = function(){
+            hideAll();
+            pickup.style = "visibility: visible;";
+        };
+        viewB.onclick = function(){
+            hideAll();
+            view.style = "visibility: visible";
+        }
+
+        var orderNum = document.getElementById("orderNum");
+
+        var custLookupId = document.getElementById("custLookup");
+        var oData = document.getElementById("orders");
+        function custLookup(){
+            var id = custLookupId.value;
+            var str = '' + id;
+            var cids = [];
+            if(str.length == 10){
+                var json = {"command": "find_customer", "phone": id};
+                var resp = sendCmd(json);
+                for (const c of resp.customers){
+                    cids.push(c.id);
+                }
+            }else{
+                cids.push(id);
+            }
+            var orders = [];
+            for(const id of cids){
+                var json = {"command": "find_order", "customer": id};
+                var resp = sendCmd(json);
+                for(const o of resp.orders){
+                    orders.push(o);
+                }
+            }
+            clearTable(oData);
+            for(const o of orders){
+                const row = document.createElement("tr");
+                const idF = document.createElement("td");
+                const btn = document.createElement("button");
+                btn.innerHTML = o.id;
+                const id = o.id;
+                btn.onclick = function(){
+                    orderNum.value = id;
+                    hideAll();
+                    view.style = "visibility: visible";
+                    viewOrder();
+                };
+                idF.appendChild(btn);
+                row.appendChild(idF);
+                if(o.total > 0){
+                    createNode(row, "$"+(o.total/100));
+                }else{
+                    createNode(row, "-$"+(-o.total/100));
+                }
+                date = new Date(o.creation*1000)
+                createNode(row, date.toLocaleDateString() + " " + date.toLocaleTimeString());
+                createNode(row, o.creator.name);
+
+                oData.appendChild(row);
+            }
+        }
+        var orderData = document.getElementById("orderData");
+        var orderLines = document.getElementById("orderLines");
+        var orderPayments = document.getElementById("orderPayments");
+        var orderComments = document.getElementById("orderComments");
+        function viewOrder(){
+            clearTable(orderData);
+            clearTable(orderLines);
+            clearTable(orderPayments);
+            clearTable(orderComments);
+            var id = orderNum.value;
+            var req = {"command": "get_order", "id": id};
+            var json = sendCmd(req);
+            var customer = json.order.customer.name;
+            var subtotal = json.order.subtotal;
+            var total = json.order.total;
+            var type = json.order.type;
+            var status = json.order.status;
+            
+            var row = document.createElement("tr");
+            
+            createNode(row, customer);
+            if(subtotal < 0){
+                createNode(row, "-$"+(-subtotal/100));
+                createNode(row, "-$"+(-total/100));
+            }else{
+                createNode(row, "$"+(subtotal/100));
+                createNode(row, "$"+(total/100));
+            }
+            if(type == 0){
+                createNode(row, "SALE");
+            }else if(type == 1){
+                createNode(row, "RETURN");
+            }else{
+                createNode(row, "UNKNOWN");
+            }
+            if(status == 0){
+                createNode(row, "COMPLETE");
+            }else if(status == 1){
+                createNode(row, "READY");
+            }else{
+                createNode(row, "UNKNOWN");
+            }
+            orderData.appendChild(row);
+            for(const line of json.order.lines){
+                row = document.createElement("tr");
+                createNode(row, line.id);
+                createNode(row, line.product.id);
+                createNode(row, line.product.name);
+                createNode(row, line.count);
+                createNode(row, "$"+(line.price/100));
+                createNode(row, "$"+(line.originalPrice/100));
+                createNode(row, line.overrideReason);
+                orderLines.appendChild(row);
+            }
+            for(const pay of json.order.payments){
+                row = document.createElement("tr");
+                createNode(row, pay.id);
+                if(pay.type == 0){
+                    createNode(row, "CASH");
+                }else{
+                    createNode(row, "UNKNOWN");
+                }
+                createNode(row, pay.identifier);
+                createNode(row, pay.authorization);
+                orderPayments.appendChild(row);
+            }
+            for(const com of json.order.comments){
+                row = document.createElement("tr");
+                date = new Date(com.creation*1000)
+                createNode(row, date.toLocaleDateString() + " " + date.toLocaleTimeString());
+                createNode(row, com.creator.name);
+                createNode(row, com.value);
+                orderComments.appendChild(row);
+            }
+        }
+        var pickupId = document.getElementById("pickupId");
+        var pickupS = document.getElementById("pickupS");
+        function doPickup(){
+            var id = pickupId.value;
+            var cmd = {"command": "pickup_order", "id": id};
+            var response = sendCmd(cmd);
+            pickupS.innerHTML = "Result: "+response.status;
+        }
+        var items = document.getElementById("items");
+        var payments = document.getElementById("payments");
+        var lineC = 0;
+        var payC = 0;
+        function expandIRow(){
+            var row = document.createElement("tr");
+            for(var i = 0; i < 4; i++){
+                var elem = document.createElement("td");
+                var inp = document.createElement("input");
+                inp.type = "number";
+                inp.id = "item-"+i+"-"+lineC;
+                if(i == 3){
+                    inp.disabled = true;
+                }
+                if(i == 1){
+                    inp.min = 0;
+                    inp.value = 1;
+                }
+                if(i == 0){
+                    inp.value = 0;
+                    inp.min = 0;
+                    const line = lineC;
+                    inp.onchange = function(){
+                        var input = document.getElementById("item-0-"+line);
+                        var cmd = {"command": "get_product", "id": input.value};
+                        var resp = sendCmd(cmd);
+                        var oPr = document.getElementById("item-3-"+line);
+                        var pr = document.getElementById("item-2-"+line);
+                        if(resp.status == "success"){
+                            oPr.value = resp.product.price / 100;
+                            pr.value = resp.product.price / 100;
+                        }else{
+                            oPr.value = 0;
+                            pr.value = 0;
+                        }
+                    };
+                }
+                elem.appendChild(inp);
+                row.appendChild(elem);
+            }
+            items.appendChild(row);
+            lineC++;
+        }
+        function expandPRow(){
+            var row = document.createElement("tr");
+            for(var i = 0; i < 4; i++){
+                var elem = document.createElement("td");
+                if(i != 0){
+                    var inp = document.createElement("input");
+                    if(i == 1)
+                        inp.type =  "number";
+                    inp.id = "pay-"+i+"-"+payC;
+                    elem.appendChild(inp);
+                }else{
+                    var select = document.createElement("select");
+                    select.id = "pay-"+i+"-"+payC;
+                    var opt1 = document.createElement("option");
+                    opt1.value = 0;
+                    opt1.innerHTML = "CASH";
+                    select.appendChild(opt1);
+                    var opt2 = document.createElement("option");
+                    opt2.value = 2;
+                    opt2.innerHTML = "CREDIT";
+                    select.appendChild(opt2);
+                    var opt3 = document.createElement("option");
+                    opt3.value = 3;
+                    opt3.innerHTML = "DEBIT";
+                    select.appendChild(opt3);
+                    elem.appendChild(select);
+                }
+                row.appendChild(elem);
+            }
+            payments.appendChild(row);
+            payC++;
+        }
+        var typeS = document.getElementById("type");
+        var dispoS = document.getElementById("dispo");
+        var cust = document.getElementById("customer");
+        var comment = document.getElementById("comment");
+        var original = document.getElementById("original");
+        var oStatus = document.getElementById("oStatus");
+        function completeOrder(){
+            var order = {"register": 1, "type": typeS.value, "dispo": dispoS.value, "customer": cust.value, "comments": [{"type":0,"value":comment.value}], "lines": [], "payments": []}
+            var orig = null;
+            if(typeS == 1){
+                var cmd = {"command": "get_order", "id": original.value};
+                orig = sendCmd(cmd).order;
+            }
+            for(var i = 0; i < lineC; i++){
+                var item = {};
+                for(var j = 0; j < 4; j++){
+                    var inp = document.getElementById("item-"+j+"-"+i);
+                    if(j == 0)
+                        item['product'] = inp.value;
+                    else if(j == 1)
+                        item['count'] = inp.value;
+                    else if(j == 2)
+                        item['price'] = inp.value*100;
+                }
+                item['overrideReason'] = 0;
+                if(orig != null && item['price'] < 0){
+                    item['origOrder'] = orig.lines[i].id; // Grab line id from original order
+                }
+                order['lines'].push(item);
+            }
+            for(var i = 0; i < payC; i++){
+                var pay = {}
+                for(var j = 0; j < 4; j++){
+                    var inp = document.getElementById("pay-"+j+"-"+i);
+                    if(j == 0)
+                        pay['type'] = inp.value;
+                    else if(j == 1)
+                        pay['amount'] = inp.value*100;
+                    else if(j == 2)
+                        pay['identifier'] = inp.value;
+                    else if(j == 3)
+                        pay['authorization'] = inp.value;
+                }
+                order['payments'].push(pay);
+            }
+            var cmd = {"command": "create_order", "order": order};
+            var result = sendCmd(cmd);
+            if(result.status != "success"){
+                oStatus.innerHTML = "Error: "+result.status;
+            }else{
+                oStatus.innerHTML = "Created order "+result.order;
+            }
+        }
+        function returnRecall(){
+            typeS.value = 1;
+            dispoS.value = 1;
+            var id = original.value;
+            var cmd = {"command": "get_order", "id": id};
+            clearTable(payments);
+            clearTable(items);
+            lineC = 0;
+            payC = 0;
+            var result = sendCmd(cmd);
+            cust.value = result.order.customer.id;
+            cust.disabled = true;
+            for(const line of result.order.lines){
+                var row = document.createElement("tr");
+                for(var i = 0; i < 5; i++){
+                    var elem = document.createElement("td");
+                    var inp = document.createElement("input");
+                    inp.type = "number";
+                    inp.id = "item-"+i+"-"+lineC;
+                    if(i != 1){
+                        inp.disabled = true;
+                    }
+                    if(i == 1){
+                        inp.min = 0;
+                        inp.max = line.count;
+                        inp.value = 0;
+                    }
+                    if(i == 0){
+                        inp.value = line.product.id;
+                    }else if(i == 2){
+                        inp.value = -line.price/100;
+                    }else if(i == 3){
+                        inp.value = -line.originalPrice/100;
+                    }else if(i == 4){
+                        inp.value = line.count;
+                    }
+                    elem.appendChild(inp);
+                    row.appendChild(elem);
+                }
+                items.appendChild(row);
+                lineC++;
+            }
+            for(const pay of result.order.payments){
+                var row = document.createElement("tr");
+                for(var i = 0; i < 4; i++){
+                    var elem = document.createElement("td");
+                    if(i != 0 ){
+                        var inp = document.createElement("input");
+                        if(i == 1)
+                            inp.type = "number";
+                        inp.id = "pay-"+i+"-"+payC;
+                        if(i != 1)
+                            inp.disabled = true;
+                        if(i == 2){
+                            inp.value = pay.identifier;
+                        }else if(i == 3){
+                            inp.value = pay.authorization;
+                        }
+                        elem.appendChild(inp);
+                    }else{
+                        var select = document.createElement("select");
+                        select.id = "pay-"+i+"-"+payC;
+                        select.value = pay.type;
+                        var opt1 = document.createElement("option");
+                        opt1.value = 0;
+                        opt1.innerHTML = "CASH";
+                        select.appendChild(opt1);
+                        var opt2 = document.createElement("option");
+                        opt2.value = 2;
+                        opt2.innerHTML = "CREDIT";
+                        select.appendChild(opt2);
+                        var opt3 = document.createElement("option");
+                        opt3.value = 3;
+                        opt3.innerHTML = "DEBIT";
+                        select.appendChild(opt3);
+                        elem.appendChild(select);
+                    }
+                    row.appendChild(elem);
+                }
+                payments.appendChild(row);
+                payC++;
+            }
+        }
+    </script>
+</html>
