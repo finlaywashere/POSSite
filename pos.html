@@ -409,7 +409,7 @@
         function completeOrder(){
             var order = {"register": 1, "type": typeS.value, "dispo": dispoS.value, "customer": cust.value, "comments": [{"type":0,"value":comment.value}], "lines": [], "payments": []}
             var orig = null;
-            if(typeS == 1){
+            if(typeS.value == 1){
                 var cmd = {"command": "get_order", "id": original.value};
                 orig = sendCmd(cmd).order;
             }
@@ -422,11 +422,11 @@
                     else if(j == 1)
                         item['count'] = inp.value;
                     else if(j == 2)
-                        item['price'] = inp.value*100;
+                        item['price'] = Math.round(inp.value*100);
                 }
                 item['overrideReason'] = 0;
-                if(orig != null && item['price'] < 0){
-                    item['origOrder'] = orig.lines[i].id; // Grab line id from original order
+                if(orig != null && item['count'] < 0){
+                    item['originalOrder'] = orig.lines[i].id; // Grab line id from original order
                 }
                 order['lines'].push(item);
             }
@@ -437,7 +437,7 @@
                     if(j == 0)
                         pay['type'] = inp.value;
                     else if(j == 1)
-                        pay['amount'] = inp.value*100;
+                        pay['amount'] = Math.round(inp.value*100);
                     else if(j == 2)
                         pay['identifier'] = inp.value;
                     else if(j == 3)
@@ -472,20 +472,21 @@
                     var inp = document.createElement("input");
                     inp.type = "number";
                     inp.id = "item-"+i+"-"+lineC;
+                    inp.onchange = updateTotals;
                     if(i != 1){
                         inp.disabled = true;
                     }
                     if(i == 1){
-                        inp.min = 0;
-                        inp.max = line.count;
+                        inp.max = 0;
+                        inp.min = -line.count;
                         inp.value = 0;
                     }
                     if(i == 0){
                         inp.value = line.product.id;
                     }else if(i == 2){
-                        inp.value = -line.price/100;
+                        inp.value = line.price/100;
                     }else if(i == 3){
-                        inp.value = -line.originalPrice/100;
+                        inp.value = line.originalPrice/100;
                     }else if(i == 4){
                         inp.value = line.count;
                     }
@@ -501,6 +502,7 @@
                     var elem = document.createElement("td");
                     if(i != 0 ){
                         var inp = document.createElement("input");
+                        inp.onchange = updateTotals;
                         if(i == 1)
                             inp.type = "number";
                         inp.id = "pay-"+i+"-"+payC;
@@ -557,7 +559,7 @@
             var pTotal = 0;
             for(var i = 0; i < payC; i++){
                 var inp = document.getElementById("pay-1-"+i);
-                pTotal += inp.value;
+                pTotal += parseFloat(inp.value);
             }
             payText.innerHTML = "Payment Total: $"+pTotal;
         }
