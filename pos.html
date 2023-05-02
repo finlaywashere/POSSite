@@ -37,6 +37,10 @@
             <button id="recall" onclick="returnRecall();">Recall Original</button><br>
             Comment:
             <input type="text" id="comment"><br>
+            <p id="subtotal">Subtotal: $0.00</p>
+            <p id="total">Total: $0.00</p>
+            <p id="paymentTotal">Payment Total: $0.00</p>
+
             <button id="addItem" onclick="expandIRow();">Add Item</button>
             <table id="items">
                 <tr class="noclear">
@@ -329,6 +333,8 @@
                 var inp = document.createElement("input");
                 inp.type = "number";
                 inp.id = "item-"+i+"-"+lineC;
+                if(i != 0)
+                    inp.onchange = updateTotals;
                 if(i == 3){
                     inp.disabled = true;
                 }
@@ -370,6 +376,7 @@
                     if(i == 1)
                         inp.type =  "number";
                     inp.id = "pay-"+i+"-"+payC;
+                    inp.onchange = updateTotals;
                     elem.appendChild(inp);
                 }else{
                     var select = document.createElement("select");
@@ -528,6 +535,31 @@
                 payments.appendChild(row);
                 payC++;
             }
+        }
+        var subText = document.getElementById("subtotal");
+        var totText = document.getElementById("total");
+        var payText = document.getElementById("paymentTotal");
+        function updateTotals(){
+            var subtotal = 0;
+            for(var i = 0; i < lineC; i++){
+                var item = {};
+                for(var j = 0; j < 4; j++){
+                    var inp = document.getElementById("item-"+j+"-"+i);
+                    if(j == 1)
+                        item['count'] = inp.value;
+                    else if(j == 2)
+                        item['price'] = inp.value;
+                }
+                subtotal += item['count'] * item['price'];
+            }
+            subText.innerHTML = "Subtotal: $"+subtotal;
+            totText.innerHTML = "Total: $"+(subtotal*1.13);
+            var pTotal = 0;
+            for(var i = 0; i < payC; i++){
+                var inp = document.getElementById("pay-1-"+i);
+                pTotal += inp.value;
+            }
+            payText.innerHTML = "Payment Total: $"+pTotal;
         }
     </script>
 </html>
