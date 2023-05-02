@@ -30,8 +30,8 @@
                 <option value="1">Carry With</option>
                 <option value="0">Pickup Later</option>
             </select><br>
-            Customer (id or phone number):
-            <input type="number" id="customer"><br>
+            Customer ID or Phone (required):
+            <input type="number" id="customer" required><br>
             Original Order (if return):
             <input type="number" id="original">
             <button id="recall" onclick="returnRecall();">Recall Original</button><br>
@@ -79,14 +79,14 @@
         </div>
         <div id="pickup" style="visibility: hidden;" class="float">
             Order Id:
-            <input type="number" id="pickupId">
+            <input type="number" id="pickupId" required>
             <button id="pickupB" onclick="doPickup();">Pick Up Order</button>
             <br>
             <p id="pickupS"></p>
         </div>
         <div id="view" style="visibility: hidden;" class="float">
             Order Number:
-            <input type="number" id="orderNum">
+            <input type="number" id="orderNum" required>
             <button id="viewOrder" onclick="viewOrder();">View Order</button>
             <table id="orderData">
                 <tr class="noclear">
@@ -333,6 +333,7 @@
                 var inp = document.createElement("input");
                 inp.type = "number";
                 inp.id = "item-"+i+"-"+lineC;
+                inp.required = true;
                 if(i != 0)
                     inp.onchange = updateTotals;
                 if(i == 3){
@@ -377,6 +378,7 @@
                         inp.type =  "number";
                     inp.id = "pay-"+i+"-"+payC;
                     inp.onchange = updateTotals;
+                    inp.required = true;
                     elem.appendChild(inp);
                 }else{
                     var select = document.createElement("select");
