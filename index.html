@@ -1,13 +1,54 @@
 <html>
     <head>
         <title>POS System (demo web version)</title>
+        <style>
+            
+            h1, h2, .center {
+                text-align: center;
+            }
+            ul {
+                list-style-type: square;
+            }
+            .section {
+                border: 1px solid black;
+                border-radius: 5px;
+                background-image: linear-gradient(#DABECA, #CDA5A8);
+            }
+            .section p, a {
+                margin-left: 20px;
+            }
+            .nooffset {
+                margin-left: 0px;
+            }
+            .c1 {
+                color: #E3D8F1;
+            }
+            .c2 {
+                color: #DABECA;
+            }
+            .c3 {
+                color: #BF8B85;
+            }
+            .c4 {
+                color: #AD8A64;
+            }
+            .c5 {
+                color: #5D5F71;
+            }
+            body {
+                background-image: linear-gradient(#E3D8F1, #DABECA);
+            }
+        </style>
     </head>
     <body>
+        <div class="section">
         <h1>Prototype Point of Sale System (demo at bottom)</h1>
-        <p>This system was developed over the course of a couple of days by Finlay Maroney. It is designed to avoid some of the issues encountered with existing solutions and is designed to be (hopefully) fairly secure. It uses local Unix sockets for authentication (can be used over SSH as well for remote terminals) which minimizes the access of any terminal. This site is not meant to be a finished system and a proper POS system would likely be a local client for this (it has an easy to use JSON API that allows integration fairly easily with local clients) as it allows for interactions with hardware such as pin pads and cash drawers more easily. I am also not huge on front end development so please excuse the lack of styling.</p>
+        <p class="center">This system was developed over the course of a couple of days by Finlay Maroney. It is designed to avoid some of the issues encountered with existing solutions and is designed to be (hopefully) fairly secure. It uses local Unix sockets for authentication (can be used over SSH as well for remote terminals) which minimizes the access of any terminal. This site is not meant to be a finished system and a proper POS system would likely be a local client for this (it has an easy to use JSON API that allows integration fairly easily with local clients) as it allows for interactions with hardware such as pin pads and cash drawers more easily. I am also not huge on front end development so please excuse the lack of styling.</p>
+        </div>
         <br>
+        <div class="section">
         <h2>Work Experience</h2>
-        <p>I have held several programming and/or IT positions including:</p>
+        <p class="center">I have held several programming and/or IT positions including:</p>
         <ul>
         <li>
         <h3>Contracted Programmer at Student Info LLC (2021)</h3>
@@ -22,34 +63,39 @@
         <p>I currently manage the Carleton Student Engineering Society (CSES) server room including managing archival storage and it's replication across multiple storage servers. I am also responsible for running and managing the majority of websites run by Carleton University engineering societies and their emails. I have modernized all of all of their systems which are now running in isolated Docker containers and FreeBSD jails for increased security and ease of deployment.</p>
         </li>
         </ul>
+        </div>
         <br>
+        <div class="section">
         <h2>Programming Proficiency</h2>
-        <p>I am experienced in multiple programming languages including:</p>
+        <p class="center">I am experienced in multiple programming languages including:</p>
         <ul>
         <li>
         <h3>C and X86_64 Assembly</h3>
-        <p>I have experience writing both low level C and X86_64 assembly including operating system development. An example of this is viewable <a href="https://github.com/finlaywashere/os2">here</a>.</p>
+        <p>I have experience writing both low level C and X86_64 assembly including operating system development. An example of this is viewable <a class="nooffset" href="https://github.com/finlaywashere/os2">here</a>.</p>
         </li>
         <li>
         <h3>Java</h3>
-        <p>I have been developing code in Java since 2016. This includes large team projects such as a vision system for a FRC (First Robotics Competition) robot which is available <a href="https://github.com/finlaywashere/FVTS">here.</a></p>
+        <p>I have been programming in Java since 2016. This includes large team projects such as a vision system for a FRC (First Robotics Competition) robot which is available <a class="nooffset" href="https://github.com/finlaywashere/FVTS">here.</a></p>
         </li>
         <li>
         <h3>PHP and Javascript</h3>
-        <p>I have worked with PHP on both professional projects and personal projects. I have developed a personal inventory and invoicing system available <a href="https://github.com/finlaywashere/GarageInventory">here</a> that has been in development for over 2 years. This inventory system is used at my house and is responsible for electronically handling accounting and cash tracking as well as inventory tracking.</p>
+        <p>I have worked with PHP on both professional projects and personal projects. I have developed a personal inventory and invoicing system available <a class="nooffset" href="https://github.com/finlaywashere/GarageInventory">here</a> that has been in development for over 2 years. This inventory system is used at my house and is responsible for electronically handling accounting and cash tracking as well as inventory tracking.</p>
         </li>
         <li>
         <h3>RPG4 (Learning)</h3>
-        <p>I have been working on learning RPG4 on IBM AS/400 systems using <a href="https://pub400.com/">pub400</a> AS/400 servers. I currently have a basic understanding of the language and am currently working on learning more about it.</p>
+        <p>I have been working on learning RPG4 on IBM AS/400 systems using <a class="nooffset" href="https://pub400.com/">pub400</a> AS/400 servers. I currently have a basic understanding of the language and am currently working on learning more about it.</p>
         </li>
         </ul>
+        </div>
         <br>
+        <div class="section">
         <p>All the source code for this site is available on Github: </p><br>
         <a href="https://github.com/finlaywashere/POSServer">Java Server</a><br>
         <a href="https://github.com/finlaywashere/POSSite">JavaScript Client</a><br>
-        <p>Along with all my other projects on <a href="https://github.com/finlaywashere">my Github</a></p>
+        <p>Along with all my other projects on <a class="nooffset" href="https://github.com/finlaywashere">my Github</a></p>
         <p>The demo below is setup to not require a password</p>
         <p>Note: customers 0-3, products 0-4 and orders 0-4 have been created for testing. If creating a return order you can enter the original order number and hit recall original to open the return menu.</p>
         <a href="pos.html">A demo can be found here!</a>
+        </div>
     </body>
 </html>

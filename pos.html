@@ -9,34 +9,56 @@
                 position: absolute;
                 margin-top: 250px;
                 top: 0;
+                margin-left: 25%;
+            }
+            h1, h2 {
+                text-align: center;
+            }
+            div {
+                border: 2px solid black;
+                border-radius: 5px;
+                padding: 5px;
+                text-align: left;
+                width: 50%;
+            }
+            body {
+                text-align: center;
+            }
+            input, div button, select {
+                float: right;
+            }
+            .menu {
+                float: center;
             }
         </style>
     </head>
     <body>
         <h1>POS Demo</h1>
-        <p>Please note that this is in no way a complete POS system and is missing lots of important stuff such as EOD totals and cash management. The entire POS client is implemented in Javascript for this demonstration and it would likely be implemented natively if ever deployed. The unix socket is connected to through a basic PHP API as you can't send data over SSH from a browser.</p><br>
+        <p>Please note that this is in no way a complete POS system and is missing lots of important stuff such as EOD totals and cash management. The entire POS client is implemented in Javascript for this demonstration and it would likely be implemented natively if ever deployed. The unix socket is connected to through a basic PHP API as you can't send data over SSH from a browser.</p>
+        <p>This site is also not mobile friendly and is designed for a 16:9 monitor</p>
         <button id="saleB">Start Sale</button>
         <button id="lookB">Lookup By Customer</button>
         <button id="viewB">View Order</button>
         <button id="pickB">Order Pickup</button>
         <div id="sale" style="visibility: hidden;" class="float">
-            Type:
+            <h2>Order Entry</h2>
+            <p>Type:
             <select id="type">
                 <option value="0">Sale</option>
                 <option value="1">Return</option>
-            </select><br>
-            Disposition:
+            </select></p>
+            <p>Disposition:
             <select id="dispo">
                 <option value="1">Carry With</option>
                 <option value="0">Pickup Later</option>
-            </select><br>
-            Customer ID or Phone (required):
-            <input type="number" id="customer" required value="0"><br>
-            Original Order (if return):
+            </select></p>
+            <p>Customer ID or Phone (required):
+            <input type="number" id="customer" required value="0"></p><br>
+            <p>Original Order (if return):
             <input type="number" id="original">
-            <button id="recall" onclick="returnRecall();">Recall Original</button><br>
-            Comment:
-            <input type="text" id="comment"><br>
+            <button id="recall" onclick="returnRecall();">Recall Original</button></p>
+            <p>Comment:
+            <input type="text" id="comment"></p>
             <p id="subtotal">Subtotal: $0.00</p>
             <p id="total">Total: $0.00</p>
             <p id="paymentTotal">Payment Total: $0.00</p>
@@ -64,6 +86,7 @@
             <p id="oStatus"></p>
         </div>
         <div id="lookup" style="visibility: hidden;" class="float">
+            <h2>Customer Lookup</h2>
             Customer (phone number or id):
             <input type="number" id="custLookup">
             <button onclick="custLookup();">Lookup</button>
@@ -78,6 +101,7 @@
             </table>
         </div>
         <div id="pickup" style="visibility: hidden;" class="float">
+            <h2>Order Pickup</h2>
             Order Id:
             <input type="number" id="pickupId" required>
             <button id="pickupB" onclick="doPickup();">Pick Up Order</button>
@@ -85,6 +109,7 @@
             <p id="pickupS"></p>
         </div>
         <div id="view" style="visibility: hidden;" class="float">
+            <h2>View Order</h2>
             Order Number:
             <input type="number" id="orderNum" required>
             <button id="viewOrder" onclick="viewOrder();">View Order</button>
